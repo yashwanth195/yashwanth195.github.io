@@ -1,9 +1,8 @@
 "use strict";
 
 (() => {
-  const systemMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const motionToggle = document.getElementById("motion-toggle");
-  let motionOverride = null;
+  let motionEnabled = true;
   const reportStorageError = (error) => {
     if (!(error instanceof DOMException)) throw error;
     console.warn("The motion preference could not be saved or restored.", error);
@@ -11,12 +10,12 @@
   };
   try {
     const savedMotion = window.localStorage.getItem("portfolio-motion");
-    if (savedMotion === "on" || savedMotion === "off") motionOverride = savedMotion === "on";
+    if (savedMotion === "on" || savedMotion === "off") motionEnabled = savedMotion === "on";
   } catch (error) {
     reportStorageError(error);
   }
   const reducedMotion = {
-    get matches() { return motionOverride === null ? systemMotion.matches : !motionOverride; }
+    get matches() { return !motionEnabled; }
   };
   const updateMotion = () => {
     const enabled = !reducedMotion.matches;
@@ -27,15 +26,14 @@
     window.dispatchEvent(new Event("portfolio-motionchange"));
   };
   motionToggle.addEventListener("click", () => {
-    motionOverride = reducedMotion.matches;
+    motionEnabled = reducedMotion.matches;
     try {
-      window.localStorage.setItem("portfolio-motion", motionOverride ? "on" : "off");
+      window.localStorage.setItem("portfolio-motion", motionEnabled ? "on" : "off");
     } catch (error) {
       reportStorageError(error);
     }
     updateMotion();
   });
-  systemMotion.addEventListener("change", updateMotion);
   updateMotion();
   document.getElementById("year").textContent = String(new Date().getFullYear());
 
